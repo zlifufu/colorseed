@@ -2,6 +2,7 @@
 """
 @author: lifufu
 """
+#通过OCR识别比例尺
 import pytesseract
 from PIL import Image
 import os
