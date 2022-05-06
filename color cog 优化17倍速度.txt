@@ -1,0 +1,237 @@
+Total time: 0.442051 s
+File: C:\Users\lifufu\AppData\Local\Temp/ipykernel_150328/3726976197.py
+Function: colorrecog at line 1
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     1                                           def colorrecog(pic,imagepath,path_result):
+     2                                               #读取图片转换为HSV    
+     3         1      23802.0  23802.0      0.5      image = cv2.imread(imagepath,1)
+     4         1       4442.0   4442.0      0.1      image = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+     5         1      22480.0  22480.0      0.5      image=image//10*10
+     6                                               #识别背景色 及其范围   
+     7         1         27.0     27.0      0.0      M,N,d=image.shape
+     8         1         49.0     49.0      0.0      backgroundimg =image[4][4];background2 =image[M-4][4];background3 =image[4][N-4];background4 =image[M-4][N-4]
+     9         1        242.0    242.0      0.0      a1=0.8 *backgroundimg[0];a2=1.2 *backgroundimg[0];b1=0.8 *backgroundimg[1];b2=1.2 *backgroundimg[1];c1=0.8 *backgroundimg[2];c2=1.2 *backgroundimg[2]
+    10         1        127.0    127.0      0.0      a12=0.8 *background2[0];a22=1.2 *background2[0];b12=0.8 *background2[1];b22=1.2 *background2[1];c12=0.8 *background2[2];c22=1.2 *background2[2]
+    11         1        122.0    122.0      0.0      a13=0.8 *background3[0];a23=1.2 *background3[0];b13=0.8 *background3[1];b23=1.2 *background3[1];c13=0.8 *background3[2];c23=1.2 *background3[2]
+    12         1        122.0    122.0      0.0      a14=0.8 *background4[0];a24=1.2 *background4[0];b14=0.8 *background4[1];b24=1.2 *background4[1];c14=0.8 *background4[2];c24=1.2 *background4[2]
+    13                                               #裁剪出图片中心25%作为识别颜色对象 去除比例尺颜色
+    14         1         37.0     37.0      0.0      imagecut=image[int(0.25*M):int(0.75*M),int(0.25*N):int(0.75*N)]
+    15                                               #定义HSV白色 
+    16                                               #white=np.array([0,0,255])
+    17                                               #green=np.array([60,150,150])
+    18                                               #拆分三通道
+    19         1         17.0     17.0      0.0      Himage=imagecut[:,:,0]
+    20         1         15.0     15.0      0.0      Simage=imagecut[:,:,1]
+    21         1         13.0     13.0      0.0      Vimage=imagecut[:,:,2]
+    22                                               #背景色修改 HSV同时满足背景条件
+    23         1       4531.0   4531.0      0.1      Hcondition=((((Himage>a1)&(Himage<a2))|((Himage>a12)&(Himage<a22))|((Himage>a13)&(Himage<a23))|((Himage>a14)&(Himage<a24))),Himage)
+    24         1       3421.0   3421.0      0.1      Scondition=((((Simage>b1)&(Simage<b2))|((Simage>b12)&(Simage<b22))|((Simage>b13)&(Simage<b23))|((Simage>b14)&(Simage<b24))),Simage)
+    25         1       3186.0   3186.0      0.1      Vcondition=((((Vimage>c1)&(Vimage<c2))|((Vimage>c12)&(Vimage<c22))|((Vimage>c13)&(Vimage<c23))|((Vimage>c14)&(Vimage<c24))),Vimage)
+    26         1         64.0     64.0      0.0      condition=Hcondition[0]&Scondition[0]&Vcondition[0]
+    27                                               #修改像素
+    28         1        888.0    888.0      0.0      Himage=np.where(condition,60, Himage)
+    29         1        533.0    533.0      0.0      Simage=np.where(condition,150, Simage)
+    30         1        516.0    516.0      0.0      Vimage=np.where(condition,150, Vimage)
+    31                                               #合并三通道H S V
+    32         1        442.0    442.0      0.0      imageR=np.array([Himage,Simage,Vimage])
+    33         1         28.0     28.0      0.0      imageR=imageR.swapaxes(0,2)
+    34         1         15.0     15.0      0.0      imageR=imageR.swapaxes(0,1)
+    35         1         10.0     10.0      0.0      imagecut=imageR#重新赋值
+    36                                               #提取种子像素
+    37         1         51.0     51.0      0.0      notcondition=~condition
+    38         1       3361.0   3361.0      0.1      seedHimage=np.extract(notcondition,Himage)
+    39         1       1399.0   1399.0      0.0      seedSimage=np.extract(notcondition,Simage)
+    40         1       1226.0   1226.0      0.0      seedVimage=np.extract(notcondition,Vimage)
+    41                                               #合成HSV列表
+    42         1      61852.0  61852.0      1.4      df1 = pd.DataFrame(list(seedHimage))#,seedSimage,seedVimage], columns=['a', 'b', 'c'])
+    43         1      54206.0  54206.0      1.2      df2 = pd.DataFrame(list(seedSimage))
+    44         1      54537.0  54537.0      1.2      df3 = pd.DataFrame(list(seedVimage))
+    45         1       8560.0   8560.0      0.2      df=pd.concat([df1, df2,df3], axis=1, join='outer')
+    46         1    3007626.0 3007626.0     68.0      seedpixel = df.apply(lambda x: tuple(x), axis=1).values.tolist()
+    47                                               #出现频率前300的像素
+    48         1      20181.0  20181.0      0.5      seed_counter = Counter(seedpixel)
+    49         1      15714.0  15714.0      0.4      seedcolor_counter300=seed_counter.most_common(300)
+    50                                               
+    51                                               #像素算术平均值
+    52         1     116276.0 116276.0      2.6      a=np.array(seedpixel)
+    53         1       4321.0   4321.0      0.1      seedcolor_mean=np.trunc(a.mean(axis=0))
+    54                                               #显示提取非背景色效果
+    55                                               #seedshow(imagecut,l=640,w=480) #hsv显示
+    56         1       2854.0   2854.0      0.1      imagecut_BGR=cv2.cvtColor(imagecut,cv2.COLOR_HSV2BGR) 
+    57                                               #seedshow(imagecut_BGR,l=640,w=480) #BGR显示
+    58                                               #保存imagecut（提取非背景色效果）
+    59         1     528391.0 528391.0     12.0      cv2.imwrite(os.path.join(path_result,pic[:-4]+"_e"+".jpg"), imagecut_BGR)#保存图片
+    60                                               #显示众数颜色
+    61         1         43.0     43.0      0.0      s=seedcolor_counter300[0][0]#众数的选择？ 
+    62         1          9.0      9.0      0.0      H=s[0]
+    63         1         11.0     11.0      0.0      S=s[1]
+    64         1         11.0     11.0      0.0      V=s[2]
+    65         1       1523.0   1523.0      0.0      bgr_img=drawhsv(H,S,V)
+    66                                               #保存bgr_img（绘制的众数图）hsv格式不行，务必保存RGB格式
+    67         1     467060.0 467060.0     10.6      cv2.imwrite(os.path.join(path_result,pic[:-4]+"_hsv"+".jpg"), bgr_img)#保存图片
+    68                                               #seedscale.to_csv(os.path.join(path, 'seedscale.csv'),index = None,encoding = 'utf8')
+    69                                               #seedscale.to_csv(os.path.join(path_result, 'seedscale.csv'),index = None,encoding = 'utf8')
+    70         1       6171.0   6171.0      0.1      return str(s),str(seedcolor_counter300),str(seedcolor_mean)
+	
+Total time: 0.128135 s
+File: C:\Users\lifufu\AppData\Local\Temp/ipykernel_150328/571878515.py
+Function: colorrecog at line 1
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     1                                           def colorrecog(pic,imagepath,path_result):
+     2         1       1956.0   1956.0      0.2      print("开始",time.time())
+     3                                               #读取图片转换为HSV    
+     4         1      19541.0  19541.0      1.5      image = cv2.imread(imagepath,1)
+     5         1       2080.0   2080.0      0.2      image = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+     6         1      21922.0  21922.0      1.7      image=image//10*10
+     7                                               #识别背景色 及其范围   
+     8         1         20.0     20.0      0.0      M,N,d=image.shape
+     9         1         49.0     49.0      0.0      backgroundimg =image[4][4];background2 =image[M-4][4];background3 =image[4][N-4];background4 =image[M-4][N-4]
+    10         1        240.0    240.0      0.0      a1=0.8 *backgroundimg[0];a2=1.2 *backgroundimg[0];b1=0.8 *backgroundimg[1];b2=1.2 *backgroundimg[1];c1=0.8 *backgroundimg[2];c2=1.2 *backgroundimg[2]
+    11         1        124.0    124.0      0.0      a12=0.8 *background2[0];a22=1.2 *background2[0];b12=0.8 *background2[1];b22=1.2 *background2[1];c12=0.8 *background2[2];c22=1.2 *background2[2]
+    12         1        123.0    123.0      0.0      a13=0.8 *background3[0];a23=1.2 *background3[0];b13=0.8 *background3[1];b23=1.2 *background3[1];c13=0.8 *background3[2];c23=1.2 *background3[2]
+    13         1        122.0    122.0      0.0      a14=0.8 *background4[0];a24=1.2 *background4[0];b14=0.8 *background4[1];b24=1.2 *background4[1];c14=0.8 *background4[2];c24=1.2 *background4[2]
+    14                                               #裁剪出图片中心25%作为识别颜色对象 去除比例尺颜色
+    15         1         39.0     39.0      0.0      imagecut=image[int(0.25*M):int(0.75*M),int(0.25*N):int(0.75*N)]
+    16         1        657.0    657.0      0.1      print("参数准备",time.time())
+    17                                               #定义HSV白色 
+    18                                               #white=np.array([0,0,255])
+    19                                               #green=np.array([60,150,150])
+    20                                               #拆分三通道
+    21         1         19.0     19.0      0.0      Himage=imagecut[:,:,0]
+    22         1         14.0     14.0      0.0      Simage=imagecut[:,:,1]
+    23         1         14.0     14.0      0.0      Vimage=imagecut[:,:,2]
+    24                                               #背景色修改 HSV同时满足背景条件
+    25         1       5521.0   5521.0      0.4      Hcondition=((((Himage>a1)&(Himage<a2))|((Himage>a12)&(Himage<a22))|((Himage>a13)&(Himage<a23))|((Himage>a14)&(Himage<a24))),Himage)
+    26         1       3117.0   3117.0      0.2      Scondition=((((Simage>b1)&(Simage<b2))|((Simage>b12)&(Simage<b22))|((Simage>b13)&(Simage<b23))|((Simage>b14)&(Simage<b24))),Simage)
+    27         1       3102.0   3102.0      0.2      Vcondition=((((Vimage>c1)&(Vimage<c2))|((Vimage>c12)&(Vimage<c22))|((Vimage>c13)&(Vimage<c23))|((Vimage>c14)&(Vimage<c24))),Vimage)
+    28         1         64.0     64.0      0.0      condition=Hcondition[0]&Scondition[0]&Vcondition[0]
+    29         1        956.0    956.0      0.1      print("背景色判断",time.time())
+    30                                               #修改像素
+    31         1        842.0    842.0      0.1      Himage=np.where(condition,60, Himage)
+    32         1        804.0    804.0      0.1      Simage=np.where(condition,150, Simage)
+    33         1        553.0    553.0      0.0      Vimage=np.where(condition,150, Vimage)
+    34         1        540.0    540.0      0.0      print("修改完成",time.time())
+    35                                               #合并三通道H S V
+    36         1       1708.0   1708.0      0.1      imageR=np.array([Himage,Simage,Vimage])
+    37         1         28.0     28.0      0.0      imageR=imageR.swapaxes(0,2)
+    38         1         14.0     14.0      0.0      imageR=imageR.swapaxes(0,1)
+    39         1         10.0     10.0      0.0      imagecut=imageR#重新赋值
+    40         1        526.0    526.0      0.0      print("合并完成",time.time())
+    41                                               #提取种子像素
+    42         1         88.0     88.0      0.0      notcondition=~condition
+    43         1       2243.0   2243.0      0.2      seedHimage=np.extract(notcondition,Himage)
+    44         1       1244.0   1244.0      0.1      seedSimage=np.extract(notcondition,Simage)
+    45         1       1203.0   1203.0      0.1      seedVimage=np.extract(notcondition,Vimage)
+    46                                               #合成HSV列表
+    47                                               #df1 = pd.DataFrame(list(seedHimage))#,seedSimage,seedVimage], columns=['a', 'b', 'c'])
+    48                                               #df2 = pd.DataFrame(list(seedSimage))
+    49                                               #df3 = pd.DataFrame(list(seedVimage))
+    50                                               #df=pd.concat([df1, df2,df3], axis=1, join='outer')
+    51                                               #seedpixel = df.apply(lambda x: tuple(x), axis=1).values.tolist()
+    52         1      36506.0  36506.0      2.8      seedpixel = list(zip(seedHimage,seedSimage,seedVimage)) 
+    53                                               #出现频率前300的像素
+    54         1      44921.0  44921.0      3.5      seed_counter = Counter(seedpixel)
+    55         1      15869.0  15869.0      1.2      seedcolor_counter300=seed_counter.most_common(300)
+    56                                               
+    57                                               #像素算术平均值
+    58         1     102203.0 102203.0      8.0      a=np.array(seedpixel)
+    59         1       4377.0   4377.0      0.3      seedcolor_mean=np.trunc(a.mean(axis=0))
+    60         1        714.0    714.0      0.1      print("种子颜色统计列表",time.time())
+    61                                               #显示提取非背景色效果
+    62                                               #seedshow(imagecut,l=640,w=480) #hsv显示
+    63         1       2970.0   2970.0      0.2      imagecut_BGR=cv2.cvtColor(imagecut,cv2.COLOR_HSV2BGR) 
+    64                                               #seedshow(imagecut_BGR,l=640,w=480) #BGR显示
+    65                                               #保存imagecut（提取非背景色效果）
+    66         1     519189.0 519189.0     40.5      cv2.imwrite(os.path.join(path_result,pic[:-4]+"_e"+".jpg"), imagecut_BGR)#保存图片
+    67         1       1424.0   1424.0      0.1      print("保存提取",time.time())
+    68                                               #显示众数颜色
+    69         1         27.0     27.0      0.0      s=seedcolor_counter300[0][0]#众数的选择？ 
+    70         1         12.0     12.0      0.0      H=s[0]
+    71         1          9.0      9.0      0.0      S=s[1]
+    72         1          9.0      9.0      0.0      V=s[2]
+    73         1       3613.0   3613.0      0.3      bgr_img=drawhsv(H,S,V)
+    74                                               #保存bgr_img（绘制的众数图）hsv格式不行，务必保存RGB格式
+    75         1     471048.0 471048.0     36.8      cv2.imwrite(os.path.join(path_result,pic[:-4]+"_hsv"+".jpg"), bgr_img)#保存图片
+    76                                               #seedscale.to_csv(os.path.join(path, 'seedscale.csv'),index = None,encoding = 'utf8')
+    77                                               #seedscale.to_csv(os.path.join(path_result, 'seedscale.csv'),index = None,encoding = 'utf8')
+    78         1       1146.0   1146.0      0.1      print("保存生成",time.time())
+    79         1       7834.0   7834.0      0.6      return str(s),str(seedcolor_counter300),str(seedcolor_mean)	
+	
+	
+Total time: 2.15887 s
+File: C:\Users\lifufu\AppData\Local\Temp/ipykernel_150328/3484991715.py
+Function: colorrecog at line 1
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     1                                           def colorrecog(pic,imagepath,path_result):
+     2                                               #读取图片转换为HSV    
+     3         1      19134.0  19134.0      0.1      image = cv2.imread(imagepath,1)
+     4         1       1990.0   1990.0      0.0      image = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+     5         1      21208.0  21208.0      0.1      image=image//10*10
+     6                                               #识别背景色 及其范围   
+     7         1         20.0     20.0      0.0      M,N,d=image.shape
+     8         1         51.0     51.0      0.0      backgroundimg =image[4][4];background2 =image[M-4][4];background3 =image[4][N-4];background4 =image[M-4][N-4]
+     9         1        238.0    238.0      0.0      a1=0.8 *backgroundimg[0];a2=1.2 *backgroundimg[0];b1=0.8 *backgroundimg[1];b2=1.2 *backgroundimg[1];c1=0.8 *backgroundimg[2];c2=1.2 *backgroundimg[2]
+    10         1        127.0    127.0      0.0      a12=0.8 *background2[0];a22=1.2 *background2[0];b12=0.8 *background2[1];b22=1.2 *background2[1];c12=0.8 *background2[2];c22=1.2 *background2[2]
+    11         1        124.0    124.0      0.0      a13=0.8 *background3[0];a23=1.2 *background3[0];b13=0.8 *background3[1];b23=1.2 *background3[1];c13=0.8 *background3[2];c23=1.2 *background3[2]
+    12         1        124.0    124.0      0.0      a14=0.8 *background4[0];a24=1.2 *background4[0];b14=0.8 *background4[1];b24=1.2 *background4[1];c14=0.8 *background4[2];c24=1.2 *background4[2]
+    13                                               #裁剪出图片中心25%作为识别颜色对象 去除比例尺颜色
+    14         1         44.0     44.0      0.0      imagecut=image[int(0.25*M):int(0.75*M),int(0.25*N):int(0.75*N)]
+    15                                               #定义HSV白色 
+    16                                               #white=np.array([0,0,255])
+    17         1         71.0     71.0      0.0      green=np.array([60,150,150])
+    18         1         14.0     14.0      0.0      hight= imagecut.shape[0]
+    19         1         10.0     10.0      0.0      width = imagecut.shape[1]
+    20                                               #imagecut的将背景色替换为白色 提取非背景色至seedpixel
+    21         1         10.0     10.0      0.0      seedpixel=[]
+    22       169       1518.0      9.0      0.0      for row in range(hight):
+    23     42168     388593.0      9.2      1.8          for col in range(width):
+    24     42000     510187.0     12.1      2.4              j=imagecut[row,col]
+    25    124548    2739336.0     22.0     12.7              if (a1<j[0]<a2 and b1<j[1]<b2 and c1<j[2]<c2)\
+    26     27516     275897.0     10.0      1.3              or (a12<j[0]<a22 and b12<j[1]<b22 and c12<j[2]<c22)\
+    27     27516     282778.0     10.3      1.3              or (a13<j[0]<a23 and b13<j[1]<b23 and c13<j[2]<c23)\
+    28     27516     283080.0     10.3      1.3              or (a14<j[0]<a24 and b14<j[1]<b24 and c14<j[2]<c24):
+    29     19069     590618.0     31.0      2.7                  imagecut[row,col]=green
+    30                                                       else:
+    31     22931     239818.0     10.5      1.1                  seedpixel.append(j)
+    32                                               
+    33                                               #出现频率前300的像素
+    34         1   16082185.0 16082185.0     74.5      c=[str(i) for i in seedpixel]
+    35         1      16688.0  16688.0      0.1      seed_counter = Counter(c)
+    36         1      15582.0  15582.0      0.1      seedcolor_counter300=seed_counter.most_common(300)
+    37                                               #像素算术平均值
+    38         1      62988.0  62988.0      0.3      a=np.array(seedpixel)
+    39         1       4496.0   4496.0      0.0      seedcolor_mean=np.trunc(a.mean(axis=0))
+    40                                               #显示提取非背景色效果
+    41                                               #seedshow(imagecut,l=640,w=480) #hsv显示
+    42         1       1368.0   1368.0      0.0      imagecut_BGR=cv2.cvtColor(imagecut,cv2.COLOR_HSV2BGR) 
+    43                                               #seedshow(imagecut_BGR,l=640,w=480) #BGR显示
+    44                                               #保存imagecut（提取非背景色效果）
+    45         1      27225.0  27225.0      0.1      cv2.imwrite(os.path.join(path_result,pic[:-4]+"_e"+".jpg"), imagecut_BGR)#保存图片
+    46                                               #显示众数颜色
+    47         1         22.0     22.0      0.0      s=seedcolor_counter300[0][0]#众数的选择？ 
+    48                                               #s='[  001  40 210  ]' 案例
+    49         1         27.0     27.0      0.0      s="["+s[1:-1].strip()+"]"#删除首尾空格
+    50         1         26.0     26.0      0.0      s=' '.join(s.split())#去除连续空格
+    51         1         10.0     10.0      0.0      douhao=','
+    52         1         14.0     14.0      0.0      s=s.replace(" ",douhao)#，取代空格
+    53                                               #提取数字至列表 解决"[02,181,124]"
+    54         1        407.0    407.0      0.0      s = re.findall(r'\[(.*?)\]',s)#返回list
+    55         1         12.0     12.0      0.0      s = s[0]
+    56         1         13.0     13.0      0.0      s = s.split(',')
+    57         1         41.0     41.0      0.0      s=[int(i) for i in s]
+    58                                               #s=eval(s)#读取为列表 无法解决"[02,181,124]"
+    59         1         11.0     11.0      0.0      H=s[0]
+    60         1         10.0     10.0      0.0      S=s[1]
+    61         1         10.0     10.0      0.0      V=s[2]
+    62         1        649.0    649.0      0.0      bgr_img=drawhsv(H,S,V)
+    63                                               #保存bgr_img（绘制的众数图）hsv格式不行，务必保存RGB格式
+    64         1      18555.0  18555.0      0.1      cv2.imwrite(os.path.join(path_result,pic[:-4]+"_hsv"+".jpg"), bgr_img)#保存图片
+    65                                               #seedscale.to_csv(os.path.join(path, 'seedscale.csv'),index = None,encoding = 'utf8')
+    66                                               #seedscale.to_csv(os.path.join(path_result, 'seedscale.csv'),index = None,encoding = 'utf8')
+    67         1       3376.0   3376.0      0.0      return str(s),str(seedcolor_counter300),str(seedcolor_mean)
